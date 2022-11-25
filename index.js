@@ -12,7 +12,7 @@ app.use(express.json());
 // mongo setup 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.d64dkmr.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri);
+// console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
@@ -27,6 +27,23 @@ async function run() {
             const cursor = carCollection.find(query);
             const catagories = await cursor.toArray();
             res.send(catagories);
+        });
+
+        app.get('/products', async (req, res) => {
+            const query = {}
+            const cursor = productCollection.find(query);
+            const products = await cursor.toArray();
+            res.send(products);
+        })
+
+        app.get('/products/:car_id', async (req, res) => {
+            const query = req.params.car_id;
+            // console.log(query);
+            const filter = {
+                product_id: query
+            }
+            const result = await productCollection.find(filter).toArray();
+            res.send(result)
         })
     }
     finally {
