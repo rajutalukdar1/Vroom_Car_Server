@@ -21,6 +21,7 @@ async function run() {
         const carCollection = client.db('vroomCar').collection('carDetails');
         const productCollection = client.db('vroomCar').collection('products');
         const bookingsCollection = client.db('vroomCar').collection('bookings');
+        const usersCollection = client.db('vroomCar').collection('users');
 
 
         app.get('/catagories', async (req, res) => {
@@ -47,17 +48,44 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/bookings', async (req, res) => {
+            const email = req.query.email;
+            // console.log(email);
+            const query = { email: email };
+            const bookings = await bookingsCollection.find(query).toArray();
+            res.send(bookings);
+        })
+
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
+            // console.log(booking);
+            const query = {
+                product_name: booking.product_name,
+                email: booking.email
+            }
+
+            const alreadyBooked = await bookingsCollection.find(query).toArray();
+
+            if (alreadyBooked.length) {
+                const message = `You already ha a Booking this car ${booking.product_name}`
+                return res.send({ acknowledged: false, message })
+            }
+
             const result = await bookingsCollection.insertOne(booking);
             res.send(result);
         })
 
         // app.get('/bookings', async (req, res) => {
         //     const query = {}
-        //     const result = await bookingsCollection.find(query);
+        //     const result = await bookingsCollection.find(query).toArray();
         //     res.send(result);
         // })
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
+        })
     }
     finally {
 
