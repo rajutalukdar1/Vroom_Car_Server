@@ -20,6 +20,7 @@ async function run() {
     try {
         const carCollection = client.db('vroomCar').collection('carDetails');
         const productCollection = client.db('vroomCar').collection('products');
+        const bookingsCollection = client.db('vroomCar').collection('bookings');
 
 
         app.get('/catagories', async (req, res) => {
@@ -45,6 +46,18 @@ async function run() {
             const result = await productCollection.find(filter).toArray();
             res.send(result)
         })
+
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            const result = await bookingsCollection.insertOne(booking);
+            res.send(result);
+        })
+
+        // app.get('/bookings', async (req, res) => {
+        //     const query = {}
+        //     const result = await bookingsCollection.find(query);
+        //     res.send(result);
+        // })
     }
     finally {
 
