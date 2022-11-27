@@ -60,6 +60,13 @@ async function run() {
             res.send(products);
         })
 
+        app.post('/products', async (req, res) => {
+            const products = req.body;
+            const result = await productCollection.insertOne(products);
+            res.send(result);
+        })
+
+
         app.get('/products/:car_id', async (req, res) => {
             const query = req.params.car_id;
             // console.log(query);
@@ -128,6 +135,13 @@ async function run() {
             const query = {};
             const users = await usersCollection.find(query).toArray();
             res.send(users);
+        })
+
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await usersCollection.deleteOne(filter);
+            res.send(result);
         })
 
         // specific admin 
