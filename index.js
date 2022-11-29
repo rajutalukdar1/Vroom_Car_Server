@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 const app = express();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KYE);
 
 //middleware
 app.use(cors());
@@ -91,6 +92,14 @@ async function run() {
             res.send(bookings);
         })
 
+        // payment 
+        app.get('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const booking = await bookingsCollection.findOne(query);
+            res.send(booking);
+        })
+
         // send mongo data 
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
@@ -118,6 +127,23 @@ async function run() {
         // })
 
 
+        app.post('/create-payment-intent', async (req, res) => {
+            const booking = req.body;
+            const price = parseInt(booking.price);
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: "usd",
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+
         // jwt token make 
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
@@ -131,12 +157,13 @@ async function run() {
         })
 
         // user all data 
-        app.get('/users', async (req, res) => {
-            const query = {};
-            const users = await usersCollection.find(query).toArray();
-            res.send(users);
-        })
+        // app.get('/users', async (req, res) => {
+        //     const query = {};
+        //     const users = await usersCollection.find(query).toArray();
+        //     res.send(users);
+        // })
 
+        // delete button 
         app.delete('/users/:id', async (req, res) => {
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -158,6 +185,26 @@ async function run() {
             res.send({ isSeller: user?.role === 'seller' });
         })
 
+        app.get('/users', async (req, res) => {
+            let query = {}
+            if (req.query.role) {
+                query = {
+                    role: req.query.role
+                }
+            };
+            const cursor = usersCollection.find(query)
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+
+        // * just seller product see the my product route
+        // app.get('/products/:name/myProducts', async (req, res) => {
+        //     const email = req.query.email;
+        //     const query = { email };
+        //     const result = await productsCollection.find(query).toArray();
+        //     res.send(result);
+        // });
+
 
         // user post 
         app.post('/users', async (req, res) => {
@@ -167,50 +214,53 @@ async function run() {
         })
 
         // make admin 
-        app.put('/users/admin/:id', verifyJWT, async (req, res) => {
 
-            const decodedEmail = req.decoded.email;
-            const query = { email: decodedEmail };
-            const user = await usersCollection.findOne(query);
+        // app.put('/users/admin/:id', verifyJWT, async (req, res) => {
 
-            if (user?.role !== 'admin') {
-                return res.status(403).send({ message: 'forbidden access' })
-            }
+        //     const decodedEmail = req.decoded.email;
+        //     const query = { email: decodedEmail };
+        //     const user = await usersCollection.findOne(query);
 
-            const id = req.params.id;
-            const filter = { _id: ObjectId(id) }
-            const options = { upsert: true };
-            const updatedDoc = {
-                $set: {
-                    role: 'admin'
-                }
-            }
-            const result = await usersCollection.updateOne(filter, updatedDoc, options);
-            res.send(result);
-        })
+        //     if (user?.role !== 'admin') {
+        //         return res.status(403).send({ message: 'forbidden access' })
+        //     }
+
+        //     const id = req.params.id;
+        //     const filter = { _id: ObjectId(id) }
+        //     const options = { upsert: true };
+        //     const updatedDoc = {
+        //         $set: {
+        //             role: 'admin'
+        //         }
+        //     }
+        //     const result = await usersCollection.updateOne(filter, updatedDoc, options);
+        //     res.send(result);
+        // })
 
         // make seller 
-        app.put('/users/seller/:id', verifyJWT, async (req, res) => {
+        // app.put('/users/seller/:id', verifyJWT, async (req, res) => {
 
-            const decodedEmail = req.decoded.email;
-            const query = { email: decodedEmail };
-            const user = await usersCollection.findOne(query);
-            // console.log(user);
-            if (user?.role !== 'seller' && user.role !== 'admin') {
-                return res.status(403).send({ message: 'forbidden access' })
-            }
+        //     const decodedEmail = req.decoded.email;
+        //     const query = { email: decodedEmail };
+        //     const user = await usersCollection.findOne(query);
+        //     // console.log(user);
+        //     if (user?.role !== 'seller' && user.role !== 'admin') {
+        //         return res.status(403).send({ message: 'forbidden access' })
+        //     }
 
-            const id = req.params.id;
-            const filter = { _id: ObjectId(id) }
-            const options = { upsert: true };
-            const updatedDoc = {
-                $set: {
-                    role: 'seller'
-                }
-            }
-            const result = await usersCollection.updateOne(filter, updatedDoc, options);
-            res.send(result);
-        })
+        //     const id = req.params.id;
+        //     const filter = { _id: ObjectId(id) }
+        //     const options = { upsert: true };
+        //     const updatedDoc = {
+        //         $set: {
+        //             role: 'seller'
+        //         }
+        //     }
+        //     const result = await usersCollection.updateOne(filter, updatedDoc, options);
+        //     res.send(result);
+        // })
+
+
     }
     finally {
 
