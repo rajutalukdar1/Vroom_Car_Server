@@ -44,6 +44,8 @@ async function run() {
         const productCollection = client.db('vroomCar').collection('products');
         const bookingsCollection = client.db('vroomCar').collection('bookings');
         const usersCollection = client.db('vroomCar').collection('users');
+        const paymentsCollection = client.db('vroomCar').collection('payments');
+        const advertiseCollection = client.db('vroomCar').collection('advertise');
 
         // categories data lode 
         app.get('/catagories', async (req, res) => {
@@ -61,11 +63,23 @@ async function run() {
             res.send(products);
         })
 
+
+        //just seller product see the my product
+        app.get('/products/:name/myProducts', async (req, res) => {
+            const email = req.query.email;
+            const query = { email };
+            const result = await productCollection.find(query).toArray();
+            res.send(result);
+
+        });
+
         app.post('/products', async (req, res) => {
             const products = req.body;
             const result = await productCollection.insertOne(products);
             res.send(result);
         })
+
+
 
 
         app.get('/products/:car_id', async (req, res) => {
@@ -120,6 +134,8 @@ async function run() {
             res.send(result);
         })
 
+
+
         // app.get('/bookings', async (req, res) => {
         //     const query = {}
         //     const result = await bookingsCollection.find(query).toArray();
@@ -143,6 +159,21 @@ async function run() {
                 clientSecret: paymentIntent.client_secret,
             });
         });
+
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id = payment.bookingId
+            const filter = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
+            res.send(result);
+        })
 
         // jwt token make 
         app.get('/jwt', async (req, res) => {
