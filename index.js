@@ -134,7 +134,31 @@ async function run() {
             res.send(result);
         })
 
+        // * seller my products advertise
+        app.post('/advertise', async (req, res) => {
+            const advertise = req.body;
+            const query = {
+                product_name: advertise.product_name,
+                email: advertise.email
+            }
+            const alreadyAdvertise = await advertiseCollection.find(query).toArray();
 
+            if (alreadyAdvertise.length > 2) {
+                const message = `You already have a advertise`;
+                console.log(message);
+                return res.send({ acknowledged: false, message });
+            }
+
+            const result = await advertiseCollection.insertOne(advertise);
+            res.send(result);
+        });
+
+        // // * seller advertisement products get the client side
+        app.get('/advertise', async (req, res) => {
+            const query = {}
+            const advertise = await advertiseCollection.find(query).toArray();
+            res.send(advertise);
+        });
 
         // app.get('/bookings', async (req, res) => {
         //     const query = {}
